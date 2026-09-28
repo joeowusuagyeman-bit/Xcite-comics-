@@ -1,0 +1,72 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>XCITE Shop</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{margin:0;background:#070711;color:#f4f4ff;font-family:Arial,sans-serif}header{text-align:center;padding:22px;border-bottom:1px solid #29294d;position:sticky;top:0;background:#070711ee;z-index:5}.logo{font-size:42px;font-weight:900;letter-spacing:6px;color:#00e5ff;text-shadow:0 0 18px #00e5ff}.container{max-width:1100px;margin:auto;padding:20px 14px}.hero{text-align:center;padding:25px}.hero h1{font-size:clamp(30px,7vw,56px)}.hero span{color:#b400ff}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.card,.panel{background:#101020;border:1px solid #29294d;border-radius:15px;overflow:hidden;padding:15px;margin:15px 0}.card{padding:0}.card img{width:100%;height:190px;object-fit:cover;background:#090912}.pad{padding:15px}.price{font-size:21px;font-weight:bold;color:#00e5ff}.muted{color:#aaaac7;font-size:14px;line-height:1.5}button,.btn{margin:0;border:1px solid #00e5ff;background:#0d1730;color:white;padding:10px 14px;border-radius:9px;cursor:pointer;font-weight:bold;margin:4px}.nav-buttons{display:block;width:100%;margin-top:22px}.nav-buttons>div{display:block;width:100%;margin:0 0 22px}.nav-buttons>div:last-child{margin-bottom:0}.nav-buttons button,.nav-buttons .btn{display:block;width:260px;max-width:85vw;box-sizing:border-box;text-align:center;margin:0 auto}button:hover{filter:brightness(1.2)}.danger{border-color:#ff4f70;background:#321322}input,textarea,select{width:100%;box-sizing:border-box;padding:11px;margin:5px 0 10px;background:#080811;color:white;border:1px solid #29294d;border-radius:8px}textarea{min-height:75px}.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}.hidden{display:none!important}.notice{padding:12px;background:#111a2b;border:1px solid #31527a;border-radius:9px;margin:10px 0}.success{border-color:#24825f}.error{border-color:#96324e}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.order{padding:12px;border:1px solid #29294d;border-radius:10px;margin:10px 0}.empty{text-align:center;color:#aaaac7;padding:30px}footer{text-align:center;color:#aaaac7;padding:35px}
+#ownerSection{box-sizing:border-box;width:100%;}</style></head><body>
+<header><div class="logo">XCITE</div><div class="muted">Comics & Cooperation • Gadgets & More</div><div class="nav-buttons">
+<div><button type="button" onclick="show('shop')">Shop</button></div>
+<div><button type="button" onclick="openOwnerPanel()">Owner</button></div>
+<div><a class="btn" href="https://whatsapp.com/channel/0029VbEPozSCnA7u5sJlVo0N" target="_blank">WhatsApp Channel</a></div>
+</div></header>
+<main class="container">
+<section id="shop"><div class="hero"><h1>Welcome to <span>XCITE</span></h1><p class="muted">Shop gadgets, place orders and contact XCITE through WhatsApp.</p></div><div id="products" class="grid"></div></section>
+<section id="checkout" class="panel hidden"><h2>Place Order</h2><div id="selected" class="notice"></div><form id="orderForm"><div class="formgrid"><div><label>Quantity</label><input id="qty" type="number" min="1" value="1" required></div><div><label>Name</label><input id="name" required></div><div><label>Phone</label><input id="phone" required></div></div><label>Delivery location</label><input id="location" required><label>Note</label><textarea id="note"></textarea><div id="total" class="notice"></div><button type="submit">Place Order & Open WhatsApp</button><button type="button" onclick="show('shop')">Cancel</button></form></section>
+<section id="ownerSection" class="panel hidden"><div id="login"><h2>XCITE Owner Login</h2><form id="loginForm"><label>Email</label><input id="email" type="email" required><label>Password</label><input id="password" type="password" required><button>Sign In</button></form><div id="loginMsg"></div></div>
+<div id="dashboard" class="hidden"><div class="row"><h2 style="flex:1">Owner Dashboard</h2><button class="danger" onclick="logout()">Sign Out</button></div>
+<div id="ownerMsg"></div><div class="panel"><h3>Add Gadget</h3><form id="productForm"><div class="formgrid"><div><label>Name</label><input id="pname" required></div><div><label>Price GH₵</label><input id="price" type="number" min="0" step=".01" required></div><div><label>Delivery fee GH₵</label><input id="fee" type="number" min="0" step=".01" value="0"></div><div><label>Delivery time</label><input id="time" placeholder="1–2 days"></div></div><label>Description</label><textarea id="desc"></textarea><label>Picture</label><input id="image" type="file" accept="image/*"><button>Add Product</button></form></div>
+<h3>Your Products</h3><div id="ownerProducts" class="grid"></div><h3>Customer Orders</h3><button onclick="loadOrders()">Refresh Orders</button><div id="orders"></div></div></section></main><footer>© XCITE Comics and Cooperation</footer>
+<script>
+/* XCITE OWNER NAVIGATION - intentionally independent of Supabase */
+function openOwnerPanel(){
+  var ids=["shop","checkout","ownerSection"];
+  ids.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.classList.add("hidden");
+  });
+  var owner=document.getElementById("ownerSection");
+  if(owner){
+    owner.classList.remove("hidden");
+    owner.style.display="block";
+    owner.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+}
+window.openOwnerPanel=openOwnerPanel;
+/* Navigation is defined first so the Shop and Owner buttons still work
+   even if the external Supabase library takes a moment to load. */
+function show(id){
+  ["shop","checkout","ownerSection"].forEach(x=>document.getElementById(x).classList.add("hidden"));
+  const target=document.getElementById(id);
+  if(target) target.classList.remove("hidden");
+  if(id==="shop" && typeof loadProducts==="function") loadProducts();
+  if(id==="ownerSection" && typeof checkOwner==="function") checkOwner();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+window.show=show;
+
+const URL="https://iquuotdqilrasjgnjjed.supabase.co",KEY="sb_publishable_1W7panAsPCd5UCbyx_StFA__4dTxp4v";
+let supabase=null,WA="233594003190",BUCKET="product-images",products=[],selected=null;
+
+if(window.supabase && typeof window.supabase.createClient==="function"){
+  supabase=window.supabase.createClient(URL,KEY);
+}else{
+  document.addEventListener("DOMContentLoaded",()=>{
+    const msg=document.getElementById("products");
+    if(msg) msg.innerHTML='<div class="notice error">XCITE could not connect to the shop service. Please make sure you are online and reload the page.</div>';
+  });
+}
+
+const esc=x=>String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m])),money=x=>"GH₵"+Number(x||0).toFixed(2);
+async function loadProducts(){let b=document.getElementById("products");b.innerHTML='<div class="empty">Loading...</div>';let r=await supabase.from("products").select("*").order("created_at",{ascending:false});if(r.error){b.innerHTML='<div class="empty">Could not load products.</div>';return}products=r.data||[];b.innerHTML=products.length?products.map(p=>`<article class="card">${p.image_url?`<img src="${esc(p.image_url)}">`:'<div style="height:190px;display:grid;place-items:center">XCITE</div>'}<div class="pad"><h3>${esc(p.name)}</h3><div class="price">${money(p.price)}</div><p class="muted">${esc(p.description)}</p><p class="muted">Delivery: ${money(p.delivery_fee)} • ${esc(p.delivery_time||"")}</p><button onclick="checkout(${p.id})">Order Now</button></div></article>`).join(""):'<div class="empty">No gadgets added yet.</div>'}
+function checkout(id){selected=products.find(p=>p.id===id);document.getElementById("selected").innerHTML=`<b>${esc(selected.name)}</b> — ${money(selected.price)} + delivery ${money(selected.delivery_fee)}`;document.getElementById("qty").value=1;calc();show("checkout")}
+document.getElementById("qty").oninput=calc;function calc(){if(!selected)return;let q=Math.max(1,+document.getElementById("qty").value||1);document.getElementById("total").innerHTML=`<b>Total: ${money(selected.price*q+ +selected.delivery_fee)}</b>`}
+document.getElementById("orderForm").onsubmit=async e=>{e.preventDefault();let q=Math.max(1,+qty.value||1),total=selected.price*q+ +selected.delivery_fee;let r=await supabase.from("orders").insert({product_id:selected.id,product_name:selected.name,quantity:q,customer_name:name.value.trim(),customer_phone:phone.value.trim(),customer_location:location.value.trim(),customer_note:note.value.trim(),product_price:selected.price,delivery_fee:selected.delivery_fee,total}).select("id").single();if(r.error){alert("Order could not be saved.");return}let msg=`XCITE ORDER%0AOrder ID: ${r.data.id}%0AProduct: ${encodeURIComponent(selected.name)}%0AQuantity: ${q}%0ATotal: ${money(total)}%0AName: ${encodeURIComponent(name.value)}%0APhone: ${encodeURIComponent(phone.value)}%0ALocation: ${encodeURIComponent(location.value)}%0ANote: ${encodeURIComponent(note.value)}`;open(`https://wa.me/${WA}?text=${msg}`,"_blank");alert("Order saved. WhatsApp will open.");e.target.reset();show("shop")}
+document.getElementById("loginForm").onsubmit=async e=>{e.preventDefault();let r=await supabase.auth.signInWithPassword({email:email.value,password:password.value});if(r.error){loginMsg.innerHTML='<div class="notice error">Login failed. Check your details.</div>';return}checkOwner()}
+async function checkOwner(){if(!supabase){login.innerHTML='<div class="notice error">Owner login needs an internet connection. Please reload the page while online.</div>';return}let u=(await supabase.auth.getUser()).data.user;if(!u){login.classList.remove("hidden");dashboard.classList.add("hidden");return}let r=await supabase.from("profiles").select("role").eq("id",u.id).single();if(r.data?.role!=="owner"){login.innerHTML='<div class="notice error">This account is not the owner account.</div><button onclick="logout()">Sign Out</button>';return}login.classList.add("hidden");dashboard.classList.remove("hidden");loadOwnerProducts();loadOrders()}
+async function logout(){await supabase.auth.signOut();show("shop")}
+document.getElementById("productForm").onsubmit=async e=>{e.preventDefault();let u=(await supabase.auth.getUser()).data.user;if(!u)return;let image_url="",file=image.files[0];if(file){let path=`${u.id}/${Date.now()}-${file.name.toLowerCase().replace(/[^a-z0-9._-]/g,"-")}`,r=await supabase.storage.from(BUCKET).upload(path,file);if(r.error){alert(r.error.message);return}image_url=supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl}let r=await supabase.from("products").insert({owner_id:u.id,name:pname.value.trim(),price:+price.value,description:desc.value.trim(),image_url,delivery_fee:+fee.value||0,delivery_time:time.value.trim()});if(r.error){alert(r.error.message);return}e.target.reset();fee.value=0;ownerMsg.innerHTML='<div class="notice success">Product added.</div>';loadOwnerProducts();loadProducts()}
+async function loadOwnerProducts(){let b=document.getElementById("ownerProducts"),r=await supabase.from("products").select("*").order("created_at",{ascending:false});b.innerHTML=r.data?.length?r.data.map(p=>`<div class="card"><div class="pad"><h3>${esc(p.name)}</h3><div class="price">${money(p.price)}</div><p class="muted">Delivery: ${money(p.delivery_fee)} • ${esc(p.delivery_time)}</p><button class="danger" onclick="del(${p.id})">Delete</button></div></div>`).join(""):'<div class="empty">No products yet.</div>'}
+async function del(id){if(!confirm("Delete this product?"))return;await supabase.from("products").delete().eq("id",id);loadOwnerProducts();loadProducts()}
+async function loadOrders(){let b=document.getElementById("orders"),r=await supabase.from("orders").select("*").order("created_at",{ascending:false});if(r.error){b.innerHTML='<div class="notice error">Could not load orders.</div>';return}b.innerHTML=r.data?.length?r.data.map(o=>`<div class="order"><b>Order #${o.id} — ${esc(o.product_name)}</b><p class="muted">${o.quantity} × ${money(o.product_price)} + ${money(o.delivery_fee)} delivery = ${money(o.total)}<br>Customer: ${esc(o.customer_name)} • ${esc(o.customer_phone)}<br>Location: ${esc(o.customer_location)}<br>${esc(o.customer_note||"")}</p><select id="s${o.id}">${["pending","confirmed","delivered","cancelled"].map(s=>`<option ${o.status===s?"selected":""}>${s}</option>`).join("")}</select><button onclick="status(${o.id})">Save Status</button></div>`).join(""):'<div class="empty">No orders yet.</div>'}
+async function status(id){await supabase.from("orders").update({status:document.getElementById("s"+id).value}).eq("id",id);alert("Status updated.");loadOrders()}
+if(supabase) loadProducts();
+</script></body></html>
